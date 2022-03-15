@@ -1,11 +1,11 @@
 from base64 import b64encode
-import requests
+import requests, json
 
 class Api:
 
-
-
     def __init__(self) -> None:
+
+
 
         file = open('/home/adam/Games/league-of-legends/drive_c/Riot Games/League of Legends/lockfile', 'r')
         self.data = file.read().split(':')
@@ -18,51 +18,39 @@ class Api:
 
 
 
-    def connect(self, method: str, endpoint: str):
+    def connect(self, method: str, endpoint: str, data = {}):
         '''Connect to websocket '''
         auth = f'riot:{self.password}'.encode('ascii')
 
         headers = {
-            'Authorization': f"Basic {b64encode(auth).decode('ascii')}"
+            'Authorization': f"Basic {b64encode(auth).decode('ascii')}",
+            'Content-type': 'application/json'
         }
+
         if method == 'get':
-            self.conn = requests.get(f'{self.uri}:{self.port}/{endpoint}', verify=self.certificate, headers=headers)
+            self.conn = requests.get(f'{self.uri}:{self.port}/{endpoint}', verify=self.certificate, headers=headers, data = data)
         
         elif method == 'post':
-            self.conn = requests.post(f'{self.uri}:{self.port}/{endpoint}', verify=self.certificate, headers=headers)
+            self.conn = requests.post(f'{self.uri}:{self.port}/{endpoint}', verify=self.certificate, headers=headers, data = data)
 
         elif method == 'put':
-            self.conn = requests.put(f'{self.uri}:{self.port}/{endpoint}', verify=self.certificate, headers=headers)
+            self.conn = requests.put(f'{self.uri}:{self.port}/{endpoint}', verify=self.certificate, headers=headers, data = data)
 
         elif method == 'delete':
-            self.conn = requests.delete(f'{self.uri}:{self.port}/{endpoint}', verify=self.certificate, headers=headers)
+            self.conn = requests.delete(f'{self.uri}:{self.port}/{endpoint}', verify=self.certificate, headers=headers, data = data)
 
         elif method == 'patch':
-            self.conn = requests.patch
+            self.conn = requests.patch(f'{self.uri}:{self.port}/{endpoint}', verify=self.certificate, headers=headers, data = data)
         
-        
+
         return self.conn
 
 
 
+summonerID = 82386223
+accountID = 2285688008995680
+puuid = '55ffad8e-83d4-5d8d-8c8e-05e3d13f556d'
+
+
 lcu = Api()
-print(lcu.connect('get', 'lol-summoner/v1/current-summoner').json())
-
-'''
-#Vars
-f = open('/home/adam/Games/league-of-legends/drive_c/Riot Games/League of Legends/lockfile', 'r') #Path to lockfile
-data = f.read().split(':')
-password = data[3]
-encodeAuth = f'riot:{password}'.encode('ascii')
-base64Auth = b64encode(encodeAuth)
-
-#Authorization for websocker
-headers = {
-    'Authorization': f"Basic {base64Auth.decode('ascii')}"
-}
-
-
-res = requests.get(f'https://127.0.0.1:{data[2]}/lol-summoner/v1/current-summoner', verify='cos/cer.pem', headers=headers)
-
-print(res.json())
-'''
+print(lcu.connect('get', f'lol-item-sets/v1/item-sets/{summonerID}/sets').json())
