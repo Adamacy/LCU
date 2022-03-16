@@ -5,13 +5,20 @@ from exceptions import Errors
 exceptions = Errors()
 
 class Api:
-
+    """
+    Main class \n
+    Using for connecting to League of Legends launcher. \n
+    You can take data about all champions in the game, champions in champion select etc.
+    """
     lang = None
     
     def __init__(self) -> None:
+        try:
+            file = open('D:/Riot Games/League of Legends/lockfile', 'r')
+            self.data = file.read().split(':')
+        except FileNotFoundError:
+            raise exceptions.gameNotStarted()
 
-        file = open('/home/adam/Games/league-of-legends/drive_c/Riot Games/League of Legends/lockfile', 'r')
-        self.data = file.read().split(':')
         self.certificate = 'cer.pem'
         self.uri = 'https://127.0.0.1'
         self.port = self.data[2]
@@ -26,34 +33,41 @@ class Api:
         }
 
     def get(self, endpoint: str, data: dict = {}):
+        """Method get for websocket"""
         self.conn = requests.get(f'{self.uri}:{self.port}{endpoint}', verify=self.certificate, headers=self.headers, data = data)
         return self.conn
         
 
     def post(self, endpoint: str, data = {}):
+        """Method post for websocket"""
         self.conn = requests.post(f'{self.uri}:{self.port}{endpoint}', verify=self.certificate, headers=self.headers, data = data)
         return self.conn
 
 
-    def put(self, endpoint: str, data = {}):        
+    def put(self, endpoint: str, data = {}): 
+        """Method put for websocket"""       
         self.conn = requests.put(f'{self.uri}:{self.port}{endpoint}', verify=self.certificate, headers=self.headers, data = data)
         return self.conn
 
 
     def delete(self, endpoint: str, data = {}):
+        """Method delete for websocket"""
         self.conn = requests.delete(f'{self.uri}:{self.port}{endpoint}', verify=self.certificate, headers=self.headers, data = data)
         return self.conn
 
 
     def patch(self, endpoint: str, data = {}):
+        """Method patch for websocket"""
         self.conn = requests.patch(f'{self.uri}:{self.port}{endpoint}', verify=self.certificate, headers=self.headers, data = data)
         return self.conn
 
     def langauges(self):
+        """List of API avaiable languages """
         lang = requests.get('https://ddragon.leagueoflegends.com/cdn/languages.json').json()
         return lang
 
     def setLanguage(self, lang: str):
+        """Sets language. Using for API response."""
         if lang in self.langauges():
             pass
         else:
@@ -84,20 +98,20 @@ class Api:
 
 
     def getAllChampions(self):
+        """Returns all champions avaiable in game"""
         champions = requests.get('http://ddragon.leagueoflegends.com/cdn/12.5.1/data/en_US/champion.json')
-        return champions.json()
+        return list(champions.json()['data'].keys())
 
 
-    def getChampStats(self, champion: str):
+    def getChampData(self, champion: str):
+        """Returns all informations about champion"""
+        champion = champion.capitalize()
         if self.lang == None:
             raise exceptions.languageNotSet()
-        if champion not in list(self.getAllChampions()['data'].keys()):
+        if champion not in self.getAllChampions():
             raise exceptions.championWrongName()
         info = requests.get(f'http://ddragon.leagueoflegends.com/cdn/12.5.1/data/{self.lang}/champion/{champion}.json')
-        
+       
         return info.json()
 
-    
-lcu = Api()
-lcu.setLanguage('pl_PL')
-print(lcu.getPlayersPicks())
+
