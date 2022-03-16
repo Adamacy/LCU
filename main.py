@@ -111,5 +111,7 @@ class Api:
         if champion not in self.getAllChampions():
             raise exceptions.championWrongName()
         info = requests.get(f'http://ddragon.leagueoflegends.com/cdn/12.5.1/data/{self.lang}/champion/{champion}.json')
-        
+       
         return info.json()
+
+
