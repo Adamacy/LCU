@@ -10,3 +10,7 @@ class Errors(Exception):
     def championWrongName(self):
 
         raise Errors('Provided champion value is not correct.')
+
+    def matchNotFound(self):
+
+        raise Errors('You\'re not in game')
