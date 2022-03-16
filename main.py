@@ -60,7 +60,7 @@ class Api:
             raise exceptions.languageWrongValue()
         self.lang = lang
 
-    def takePicks(self):
+    def getPlayersPicks(self):
         """Return array of champions name selected during champion select"""
         session = self.get('/lol-champ-select/v1/session').json()
         summoner = self.get('/lol-summoner/v1/current-summoner').json()
@@ -69,15 +69,20 @@ class Api:
         self.puuid = summoner['puuid']
         self.summonerID = summoner['summonerId']
         self.accountID = summoner['accountId']
-        try:
+        try: 
             for i in session['actions'][0]:
                 championID = i['championId']
-                champ = self.get(f'/lol-champions/v1/inventories/{self.summonerID}/champions/{championID}')
-                champions.append(champ.json()['name'])
+                if championID == 0:
+                    pass
+                else:
+                    champ = self.get(f'/lol-champions/v1/inventories/{self.summonerID}/champions/{championID}')
+                    print(champ.json()['name'])
+                    champions.append(champ.json()['name'])
             return champions
         except:
-            print('Error')
-    
+            raise exceptions.matchNotFound()
+
+
     def getAllChampions(self):
         champions = requests.get('http://ddragon.leagueoflegends.com/cdn/12.5.1/data/en_US/champion.json')
         return champions.json()
@@ -89,10 +94,10 @@ class Api:
         if champion not in list(self.getAllChampions()['data'].keys()):
             raise exceptions.championWrongName()
         info = requests.get(f'http://ddragon.leagueoflegends.com/cdn/12.5.1/data/{self.lang}/champion/{champion}.json')
+        
         return info.json()
 
     
 lcu = Api()
 lcu.setLanguage('pl_PL')
-
-print(lcu.getChampStats('Zyra'))
+print(lcu.getPlayersPicks())
