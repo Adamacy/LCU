@@ -1,24 +1,22 @@
 from base64 import b64encode
-import requests, json, asyncio
+import requests
+import json
+import asyncio
 from exceptions import Errors
+from bs4 import BeautifulSoup
 
 exceptions = Errors()
 
-class Api:
-    """
-    Main class \n
-    Using for connecting to League of Legends launcher. \n
-    You can take data about all champions in the game, champions in champion select etc.
-    """
-    lang = None
-    
-    def __init__(self) -> None:
-        try:
-            file = open('D:/Riot Games/League of Legends/lockfile', 'r')
-            self.data = file.read().split(':')
-        except FileNotFoundError:
-            raise exceptions.gameNotStarted()
 
+class Api:
+
+    lang = None
+
+    def __init__(self) -> None:
+
+        file = open(
+            '/home/adam/Games/league-of-legends/drive_c/Riot Games/League of Legends/lockfile', 'r')
+        self.data = file.read().split(':')
         self.certificate = 'cer.pem'
         self.uri = 'https://127.0.0.1'
         self.port = self.data[2]
@@ -33,41 +31,36 @@ class Api:
         }
 
     def get(self, endpoint: str, data: dict = {}):
-        """Method get for websocket"""
-        self.conn = requests.get(f'{self.uri}:{self.port}{endpoint}', verify=self.certificate, headers=self.headers, data = data)
-        return self.conn
-        
-
-    def post(self, endpoint: str, data = {}):
-        """Method post for websocket"""
-        self.conn = requests.post(f'{self.uri}:{self.port}{endpoint}', verify=self.certificate, headers=self.headers, data = data)
+        self.conn = requests.get(f'{self.uri}:{self.port}{endpoint}',
+                                 verify=self.certificate, headers=self.headers, data=data)
         return self.conn
 
-
-    def put(self, endpoint: str, data = {}): 
-        """Method put for websocket"""       
-        self.conn = requests.put(f'{self.uri}:{self.port}{endpoint}', verify=self.certificate, headers=self.headers, data = data)
+    def post(self, endpoint: str, data={}):
+        self.conn = requests.post(f'{self.uri}:{self.port}{endpoint}',
+                                  verify=self.certificate, headers=self.headers, data=data)
         return self.conn
 
-
-    def delete(self, endpoint: str, data = {}):
-        """Method delete for websocket"""
-        self.conn = requests.delete(f'{self.uri}:{self.port}{endpoint}', verify=self.certificate, headers=self.headers, data = data)
+    def put(self, endpoint: str, data={}):
+        self.conn = requests.put(f'{self.uri}:{self.port}{endpoint}',
+                                 verify=self.certificate, headers=self.headers, data=data)
         return self.conn
 
+    def delete(self, endpoint: str, data={}):
+        self.conn = requests.delete(
+            f'{self.uri}:{self.port}{endpoint}', verify=self.certificate, headers=self.headers, data=data)
+        return self.conn
 
-    def patch(self, endpoint: str, data = {}):
-        """Method patch for websocket"""
-        self.conn = requests.patch(f'{self.uri}:{self.port}{endpoint}', verify=self.certificate, headers=self.headers, data = data)
+    def patch(self, endpoint: str, data={}):
+        self.conn = requests.patch(f'{self.uri}:{self.port}{endpoint}',
+                                   verify=self.certificate, headers=self.headers, data=data)
         return self.conn
 
     def langauges(self):
-        """List of API avaiable languages """
-        lang = requests.get('https://ddragon.leagueoflegends.com/cdn/languages.json').json()
+        lang = requests.get(
+            'https://ddragon.leagueoflegends.com/cdn/languages.json').json()
         return lang
 
     def setLanguage(self, lang: str):
-        """Sets language. Using for API response."""
         if lang in self.langauges():
             pass
         else:
@@ -83,35 +76,81 @@ class Api:
         self.puuid = summoner['puuid']
         self.summonerID = summoner['summonerId']
         self.accountID = summoner['accountId']
-        try: 
+        try:
             for i in session['actions'][0]:
                 championID = i['championId']
                 if championID == 0:
                     pass
                 else:
-                    champ = self.get(f'/lol-champions/v1/inventories/{self.summonerID}/champions/{championID}')
-                    print(champ.json()['name'])
+                    champ = self.get(
+                        f'/lol-champions/v1/inventories/{self.summonerID}/champions/{championID}')
                     champions.append(champ.json()['name'])
             return champions
         except:
             raise exceptions.matchNotFound()
 
-
     def getAllChampions(self):
-        """Returns all champions avaiable in game"""
-        champions = requests.get('http://ddragon.leagueoflegends.com/cdn/12.5.1/data/en_US/champion.json')
-        return list(champions.json()['data'].keys())
 
+        champions = requests.get(
+            'http://ddragon.leagueoflegends.com/cdn/12.5.1/data/en_US/champion.json')
+        return champions.json()
 
-    def getChampData(self, champion: str):
-        """Returns all informations about champion"""
-        champion = champion.capitalize()
+    def getChampStats(self, champion: str):
         if self.lang == None:
             raise exceptions.languageNotSet()
-        if champion not in self.getAllChampions():
+        if champion not in list(self.getAllChampions()['data'].keys()):
             raise exceptions.championWrongName()
-        info = requests.get(f'http://ddragon.leagueoflegends.com/cdn/12.5.1/data/{self.lang}/champion/{champion}.json')
-       
+        info = requests.get(
+            f'http://ddragon.leagueoflegends.com/cdn/12.5.1/data/{self.lang}/champion/{champion}.json')
+
         return info.json()
 
+    def getCounters(self, champion: str):
+        
+        res = requests.get(f'http://www.lolcounter.com/champions/{champion}', headers={'User-Agent': "counter-lol"})
+        soup = BeautifulSoup(res.text, 'html.parser')
+        counters = soup.find(class_='weak-block')
 
+        counters = counters.find_all(class_="champ-block")
+        counter_list = [counter.find(class_='name').get_text() for counter in counters]
+
+        return counter_list
+
+    def getChampionImage(self, champion: str):
+        """Returns champion image as bytes"""
+
+        champion = champion.capitalize()
+
+        data = self.getChampStats(champion)['data'][champion]
+        i = data['image']['full']
+        return f'http://ddragon.leagueoflegends.com/cdn/12.5.1/img/champion/{i}'
+
+    def getChampionSpells(self, champion: str):
+        """Returns an array of champion spells and passive"""
+
+        data = self.getChampStats(champion)['data'][champion]
+        self.spellNames = []
+        for spell in data['spells']:
+            self.spellNames.append(spell['name'])
+        self.spellNames.append(data['passive']['name'])
+        
+        return self.spellNames
+
+    def getSpellsImage(self, champion: str):
+        """Return images of all champion spells"""
+        data = self.getChampStats(champion)['data'][champion]
+        images = []
+        for i in data['spells']:
+            i = i['image']['full']
+            spellImage = f'http://ddragon.leagueoflegends.com/cdn/12.5.1/img/spell/{i}'
+            images.append(spellImage)
+
+        passive = f"http://ddragon.leagueoflegends.com/cdn/12.5.1/img/passive/{data['passive']['image']['full']}"
+        images.append(passive)
+
+        return images
+
+lcu = Api()
+lcu.setLanguage('en_US')
+print(lcu.getChampionImage('lux'))
+print(lcu.getSpellsImage('Lux'))
