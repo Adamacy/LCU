@@ -2,5 +2,9 @@ from main import Api
 
 lcu = Api()
 
-lcu.setChampion('shaco')
-print(lcu.importRunes())
+
+for i in lcu.getPlayersPicks():
+    print(i)
+    
+    
+print(lcu.getPlayersPicks())

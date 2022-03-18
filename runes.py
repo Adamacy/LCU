@@ -57,5 +57,3 @@ def getRunes(champion: str):
         runes.append((i.find('img')['alt']))
         
     return runes
-
-getRunes('Shaco')

@@ -9,7 +9,6 @@ import runes
 
 exceptions = Errors()
 
-
 class Api:
 
     lang = 'en_US'
@@ -84,12 +83,15 @@ class Api:
         session = self.get('/lol-champ-select/v1/session').json()
         summoner = self.get('/lol-summoner/v1/current-summoner').json()
         champions = []
-
         self.puuid = summoner['puuid']
         self.summonerID = summoner['summonerId']
         self.accountID = summoner['accountId']
         try:
-            for i in session['actions'][0]:
+            for i in session['actions'][1]:
+                if i[1]['type'] == 'ban':
+                    continue
+                else:
+                    print(i)
                 championID = i['championId']
                 if championID == 0:
                     pass
