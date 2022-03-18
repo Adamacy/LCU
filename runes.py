@@ -7,9 +7,7 @@ def getRunes(champion: str):
     Returns dict with best build for selected champion.
     """
 
-
     res = requests.get(f'https://u.gg/lol/champions/{champion}/build')
-
     runes = []
     
     soup = BeautifulSoup(res.text, 'html.parser')
@@ -50,10 +48,14 @@ def getRunes(champion: str):
         data = i.find('img')['alt']
         if "The Rune" in data:
             rune = data.replace("The Rune ", "")
-            secondRunes.append(rune)
+            runes.append(rune)
 
-    data = {
-        'primary': (title, runes),
-        'secondary': (secondTitle, secondRunes)
-    }
-    return data
+    stats = soup.find(class_='rune-tree_v2 stat-shards-container_v2')
+    statsAll = stats.find_all(class_='perks')
+    for i in statsAll:
+        i = i.find(class_='shard shard-active')
+        runes.append((i.find('img')['alt']))
+        
+    return runes
+
+getRunes('Shaco')

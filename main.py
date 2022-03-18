@@ -12,7 +12,7 @@ exceptions = Errors()
 
 class Api:
 
-    lang = None
+    lang = 'en_US'
     champion = None
     def __init__(self) -> None:
 
@@ -73,11 +73,11 @@ class Api:
         self.lang = lang
 
     def setChampion(self, champion: str):
-        champions = requests.get('http://ddragon.leagueoflegends.com/cdn/12.5.1/data/en_US/champion.json').json()
-        if champion not in champions:
+        champion = champion.capitalize()
+        if champion not in self.getAllChampions():
             raise exceptions.championWrongName()
         else:
-            print('It works!')
+            self.champion = champion
 
     def getPlayersPicks(self):
         """Return array of champions name selected during champion select"""
@@ -176,24 +176,27 @@ class Api:
 
     def importRunes(self):
 
+        id = self.get('/lol-perks/v1/currentpage').json()['id']
+        data = {'autoModifiedSelections': [],
+            'current': True,
+            'id': id,
+            'isActive': True,   
+            'isDeletable': True,
+            'isEditable': True,
+            'isValid': True,
+            'lastModified': 1647086611516,
+            'name': f'{self.champion} Build',
+            'order': 2,
+            'primaryStyleId': 8100,
+            'selectedPerkIds': [],
+            'subStyleId': 8200
+        }
+
 
         cos = self.getRunes()
         for i in self.get('/lol-perks/v1/perks').json():
-            if i['name'] in cos['primary'][1] or i['name'] in cos['secondary'][1]:
-                print(i['name'], i['id'])
-
-#current = lcu.get('/lol-perks/v1/currentpage').json()['id']
-data = {'autoModifiedSelections': [],
-        'current': True,
-        'id': 908851014,
-        'isActive': True,
-        'isDeletable': True,
-        'isEditable': True,
-        'isValid': True,
-        'lastModified': 1647086611516,
-        'name': 'Tfuj stary',
-        'order': 2,
-        'primaryStyleId': 8100,
-        'selectedPerkIds': [9923, 8143, 8138, 8134, 8233, 8236, 5005, 5008, 5001],
-        'subStyleId': 8200
-        }
+            if i['name'] in cos:
+                data['selectedPerkIds'].append(i['id'])
+        
+        res = self.put(f'/lol-perks/v1/pages/{id}', data=json.dumps(data))
+        return res
