@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 
 
 def getRunes(champion: str):
+    """
+    Returns dict with best build for selected champion.
+    """
+
+
     res = requests.get(f'https://u.gg/lol/champions/{champion}/build')
 
     runes = []
@@ -32,12 +37,23 @@ def getRunes(champion: str):
             runes.append(rune)
 
 
-    secondary = soup.find(class_='rune-tree_v2 secondary-tree')
-    secondary = secondary.find()
+    secondary = soup.find(class_='secondary-tree')
+    secondTitle = secondary.find(class_='perk-style-title').get_text()
+    secondRunes = []
+    cos = secondary.find_all(class_='perk-row')
+
+    for i in cos:
+        i = i.find(class_='perks')
+        i = i.find(class_='perk perk-active')
+        if i == None:
+            continue
+        data = i.find('img')['alt']
+        if "The Rune" in data:
+            rune = data.replace("The Rune ", "")
+            secondRunes.append(rune)
+
     data = {
         'primary': (title, runes),
-        'secondary': ('secondTitle', 'Runes')
+        'secondary': (secondTitle, secondRunes)
     }
     return data
-
-print(getRunes('Shaco'))
