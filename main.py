@@ -106,13 +106,15 @@ class Api:
         return info.json()
 
     def getCounters(self, champion: str):
-        
-        res = requests.get(f'http://www.lolcounter.com/champions/{champion}', headers={'User-Agent': "counter-lol"})
+
+        res = requests.get(
+            f'http://www.lolcounter.com/champions/{champion}', headers={'User-Agent': "counter-lol"})
         soup = BeautifulSoup(res.text, 'html.parser')
         counters = soup.find(class_='weak-block')
 
         counters = counters.find_all(class_="champ-block")
-        counter_list = [counter.find(class_='name').get_text() for counter in counters]
+        counter_list = [counter.find(class_='name').get_text()
+                        for counter in counters]
 
         return counter_list
 
@@ -133,7 +135,7 @@ class Api:
         for spell in data['spells']:
             self.spellNames.append(spell['name'])
         self.spellNames.append(data['passive']['name'])
-        
+
         return self.spellNames
 
     def getSpellsImage(self, champion: str):
@@ -150,7 +152,30 @@ class Api:
 
         return images
 
+    def getChampionBuild(self, champion: str):
+        """Get build for champion"""
+
+        res = requests.get(f'https://u.gg/lol/champions/{champion}/build')
+
 lcu = Api()
 lcu.setLanguage('en_US')
-print(lcu.getChampionImage('lux'))
-print(lcu.getSpellsImage('Lux'))
+
+
+current = lcu.get('/lol-perks/v1/currentpage').json()['id']
+data = {'autoModifiedSelections': [],
+        'current': False,
+        'id': 908851014,
+        'isActive': False,
+        'isDeletable': True,
+        'isEditable': True,
+        'isValid': True,
+        'lastModified': 1647086611516,
+        'name': 'Tfuj stary',
+        'order': 2,
+        'primaryStyleId': 8100,
+        'selectedPerkIds': [9923, 8143, 8138, 8134, 8233, 8236, 5005, 5008, 5001],
+        'subStyleId': 8200
+    }
+
+print(lcu.get('/lol-perks/v1/perks').json())
+#print(lcu.put(f'/lol-perks/v1/pages/{current}', data=json.dumps(data)))
