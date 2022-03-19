@@ -16,9 +16,9 @@ class Api:
     def __init__(self) -> None:
 
         file = open(
-            'D:/Riot Games/League of Legends/lockfile', 'r')
+            'C:/Riot Games/League of Legends/lockfile', 'r')
         self.data = file.read().split(':')
-        self.certificate = 'cer.pem'
+        self.certificate = 'LCU/cer.pem'
         self.uri = 'https://127.0.0.1'
         self.port = self.data[2]
         self.password = self.data[3]
@@ -167,38 +167,28 @@ class Api:
 
         return images
 
-    def getChampionBuild(self):
-        """Get build for champion"""
+    def getAllRunes(self):
 
-        res = requests.get(f'https://u.gg/lol/champions/{self.champion}/build')
+        res = requests.get('')
 
-    def getRunes(self):
+    def getChampBuild(self):
         """Returns names of best build for selected champion"""
         return runes.getRunes(self.champion)
 
     def importRunes(self):
 
         id = self.get('/lol-perks/v1/currentpage').json()['id']
-        data = {'autoModifiedSelections': [],
-            'current': True,
-            'id': id,
-            'isActive': True,   
-            'isDeletable': True,
-            'isEditable': True,
-            'isValid': True,
-            'lastModified': 1647086611516,
-            'name': f'{self.champion} Build',
-            'order': 2,
-            'primaryStyleId': 8100,
-            'selectedPerkIds': [],
-            'subStyleId': 8200
-        }
+
+        
+        data = {'autoModifiedSelections': [], 'current': True, 'id': id, 'isActive': False, 'isDeletable': True, 'isEditable': True, 'isValid': True, 'lastModified': 1647681656447, 'name': 'New Runes Page 2', 'order': 1, 'primaryStyleId': 8100, 'selectedPerkIds': [], 'subStyleId': 8000}
 
 
-        cos = self.getRunes()
+        cos = self.getChampBuild()
         for i in self.get('/lol-perks/v1/perks').json():
             if i['name'] in cos:
+                print(i['name'] ,i['id'])
                 data['selectedPerkIds'].append(i['id'])
-        
+        print(data['selectedPerkIds'])
         res = self.put(f'/lol-perks/v1/pages/{id}', data=json.dumps(data))
+        print(self.post('/lol-perks/v1/pages', data=json.dumps(data)).json())
         return res

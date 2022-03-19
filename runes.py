@@ -1,6 +1,15 @@
 import requests
 from bs4 import BeautifulSoup
 
+convert = {
+    'The Adaptive Force Shard': 'Adaptive',
+    "The Attack Speed Shard": 'AttackSpeed',
+    'The Scaling CDR Shard': 'CDRScaling',
+    'The Armor Shard': "Armor",
+    "The Magic Resist Shard": "MagicRes",
+    "The Scaling Bonus Health Shard": "HealthScaling"
+
+}
 
 def getRunes(champion: str):
     """
@@ -12,7 +21,6 @@ def getRunes(champion: str):
     
     soup = BeautifulSoup(res.text, 'html.parser')
 
-    title = soup.find(class_='perk-style-title').get_text()
     primary = soup.find(class_='rune-tree_v2 primary-tree')
     primary = primary.find(class_='perk keystone perk-active')
 
@@ -36,8 +44,6 @@ def getRunes(champion: str):
 
 
     secondary = soup.find(class_='secondary-tree')
-    secondTitle = secondary.find(class_='perk-style-title').get_text()
-    secondRunes = []
     cos = secondary.find_all(class_='perk-row')
 
     for i in cos:
@@ -54,6 +60,7 @@ def getRunes(champion: str):
     statsAll = stats.find_all(class_='perks')
     for i in statsAll:
         i = i.find(class_='shard shard-active')
-        runes.append((i.find('img')['alt']))
-        
+        i = i.find('img')['alt']
+        runes.append(convert[i])
+
     return runes

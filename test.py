@@ -1,10 +1,9 @@
 from main import Api
+import random
 
 lcu = Api()
 
+cos = lcu.getAllChampions()
+lcu.setChampion(random.choice(cos))
 
-for i in lcu.getPlayersPicks():
-    print(i)
-    
-    
-print(lcu.getPlayersPicks())
+print(lcu.importRunes().json())
