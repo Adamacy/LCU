@@ -1,9 +1,8 @@
 from main import Api
-import random
 
 lcu = Api()
 
 cos = lcu.getAllChampions()
-lcu.setChampion(random.choice(cos))
+lcu.setChampion('Riven')
 
-print(lcu.importRunes().json())
+print(lcu.getChampBuild())

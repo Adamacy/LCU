@@ -9,16 +9,18 @@ import runes
 
 exceptions = Errors()
 
+
 class Api:
 
     lang = 'en_US'
     champion = None
+
     def __init__(self) -> None:
 
         file = open(
-            'C:/Riot Games/League of Legends/lockfile', 'r')
+            'D:/Riot Games/League of Legends/lockfile', 'r')
         self.data = file.read().split(':')
-        self.certificate = 'LCU/cer.pem'
+        self.certificate = 'cer.pem'
         self.uri = 'https://127.0.0.1'
         self.port = self.data[2]
         self.password = self.data[3]
@@ -107,7 +109,7 @@ class Api:
 
         champions = requests.get(
             'http://ddragon.leagueoflegends.com/cdn/12.5.1/data/en_US/champion.json')
-        
+
         return list(champions.json()['data'].keys())
 
     def getChampStats(self):
@@ -167,10 +169,6 @@ class Api:
 
         return images
 
-    def getAllRunes(self):
-
-        res = requests.get('')
-
     def getChampBuild(self):
         """Returns names of best build for selected champion"""
         return runes.getRunes(self.champion)
@@ -178,17 +176,25 @@ class Api:
     def importRunes(self):
 
         id = self.get('/lol-perks/v1/currentpage').json()['id']
-
-        
-        data = {'autoModifiedSelections': [], 'current': True, 'id': id, 'isActive': False, 'isDeletable': True, 'isEditable': True, 'isValid': True, 'lastModified': 1647681656447, 'name': 'New Runes Page 2', 'order': 1, 'primaryStyleId': 8100, 'selectedPerkIds': [], 'subStyleId': 8000}
-
-
-        cos = self.getChampBuild()
-        for i in self.get('/lol-perks/v1/perks').json():
-            if i['name'] in cos:
-                print(i['name'] ,i['id'])
-                data['selectedPerkIds'].append(i['id'])
-        print(data['selectedPerkIds'])
-        res = self.put(f'/lol-perks/v1/pages/{id}', data=json.dumps(data))
-        print(self.post('/lol-perks/v1/pages', data=json.dumps(data)).json())
-        return res
+        self.delete(f'/lol-perks/v1/pages/{id}')
+        data = {
+            "autoModifiedSelections": [
+                0
+            ],
+            "current": True,
+            "id": 0,
+            "isActive": True,
+            "isDeletable": True,
+            "isEditable": True,
+            "isValid": True,
+            "lastModified": 0,
+            "name": "string",
+            "order": 0,
+            "primaryStyleId": 0,
+            "selectedPerkIds": [],
+            "subStyleId": 0
+        }
+        self.post('/lol-perks/v1/pages', data=json.dumps(data))
+        return "Deleted/Created"
+        # https://hextechdocs.dev/how-to-set-runes-using-lcu/
+        # https://hextechdocs.dev/

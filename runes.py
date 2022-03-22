@@ -21,6 +21,10 @@ def getRunes(champion: str):
     
     soup = BeautifulSoup(res.text, 'html.parser')
 
+    titles = soup.find_all(class_='perk-style-title')
+    primaryRune = titles[0].getText()
+    secondaryRune = titles[1].getText()
+
     primary = soup.find(class_='rune-tree_v2 primary-tree')
     primary = primary.find(class_='perk keystone perk-active')
 
@@ -62,5 +66,9 @@ def getRunes(champion: str):
         i = i.find(class_='shard shard-active')
         i = i.find('img')['alt']
         runes.append(convert[i])
-
-    return runes
+    data = {
+        "primary": primaryRune,
+        "secondary": secondaryRune,
+        "ids": runes,
+    }
+    return data
