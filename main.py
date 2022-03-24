@@ -14,10 +14,11 @@ class Api:
 
     lang = 'en_US'
     champion = None
+
     def __init__(self) -> None:
 
         file = open(
-            'D:/Riot Games/League of Legends/lockfile', 'r')
+            'C:/Riot Games/League of Legends/lockfile', 'r')
         self.data = file.read().split(':')
         self.certificate = 'cer.pem'
         self.uri = 'https://127.0.0.1'
@@ -84,12 +85,15 @@ class Api:
         session = self.get('/lol-champ-select/v1/session').json()
         summoner = self.get('/lol-summoner/v1/current-summoner').json()
         champions = []
-
         self.puuid = summoner['puuid']
         self.summonerID = summoner['summonerId']
         self.accountID = summoner['accountId']
         try:
-            for i in session['actions'][0]:
+            for i in session['actions'][1]:
+                if i[1]['type'] == 'ban':
+                    continue
+                else:
+                    print(i)
                 championID = i['championId']
                 if championID == 0:
                     pass
@@ -105,7 +109,7 @@ class Api:
 
         champions = requests.get(
             'http://ddragon.leagueoflegends.com/cdn/12.5.1/data/en_US/champion.json')
-        
+
         return list(champions.json()['data'].keys())
 
     def getChampStats(self):
@@ -165,38 +169,39 @@ class Api:
 
         return images
 
-    def getChampionBuild(self):
-        """Get build for champion"""
+    def allRunes(self):
+        return self.get('/lol-perks/v1/perks').json()
 
-        res = requests.get(f'https://u.gg/lol/champions/{self.champion}/build')
-
-    def getRunes(self):
+    def getChampBuild(self):
         """Returns names of best build for selected champion"""
         return runes.getRunes(self.champion)
 
     def importRunes(self):
+        """Doesn't Work"""
 
+        runes = self.getChampBuild()
         id = self.get('/lol-perks/v1/currentpage').json()['id']
-        data = {'autoModifiedSelections': [],
-            'current': True,
-            'id': id,
-            'isActive': True,   
-            'isDeletable': True,
-            'isEditable': True,
-            'isValid': True,
-            'lastModified': 1647086611516,
-            'name': f'{self.champion} Build',
-            'order': 2,
-            'primaryStyleId': 8100,
-            'selectedPerkIds': [],
-            'subStyleId': 8200
+        self.delete(f'/lol-perks/v1/pages/{id}')
+        data = {
+            "autoModifiedSelections": [
+                0
+            ],
+            "current": True,
+            "id": 0,
+            "isActive": True,
+            "isDeletable": True,
+            "isEditable": True,
+            "isValid": True,
+            "lastModified": 0,
+            "name": f"{self.champion} build",
+            "order": 0,
+            "primaryStyleId": 0,
+            "selectedPerkIds": [],
+            "subStyleId": 0
         }
+        data['primaryStyleId'] = runes['primary']
+        data['subStyleId'] = runes['secondary']
+        data['selectedPerkIds'] = runes['ids']
 
-
-        cos = self.getRunes()
-        for i in self.get('/lol-perks/v1/perks').json():
-            if i['name'] in cos:
-                data['selectedPerkIds'].append(i['id'])
-        
-        res = self.put(f'/lol-perks/v1/pages/{id}', data=json.dumps(data))
-        return res
+        cos = self.post('/lol-perks/v1/pages', data=json.dumps(data))
+        return data

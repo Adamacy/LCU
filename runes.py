@@ -1,6 +1,23 @@
-import requests
+import requests, json
 from bs4 import BeautifulSoup
 
+convert = {
+    'The Adaptive Force Shard': 'Adaptive',
+    "The Attack Speed Shard": 'AttackSpeed',
+    'The Scaling CDR Shard': 'CDRScaling',
+    'The Armor Shard': "Armor",
+    "The Magic Resist Shard": "MagicRes",
+    "The Scaling Bonus Health Shard": "HealthScaling"
+
+}
+
+style = {
+    'Domination': 8100,
+    'Inspiration': 8300,
+    'Precision': 8000,
+    'Resolve': 8400,
+    'Sorcery': 8200
+}
 
 def getRunes(champion: str):
     """
@@ -12,7 +29,10 @@ def getRunes(champion: str):
     
     soup = BeautifulSoup(res.text, 'html.parser')
 
-    title = soup.find(class_='perk-style-title').get_text()
+    titles = soup.find_all(class_='perk-style-title')
+    primaryRune = titles[0].getText()
+    secondaryRune = titles[1].getText()
+
     primary = soup.find(class_='rune-tree_v2 primary-tree')
     primary = primary.find(class_='perk keystone perk-active')
 
@@ -36,8 +56,6 @@ def getRunes(champion: str):
 
 
     secondary = soup.find(class_='secondary-tree')
-    secondTitle = secondary.find(class_='perk-style-title').get_text()
-    secondRunes = []
     cos = secondary.find_all(class_='perk-row')
 
     for i in cos:
@@ -54,8 +72,17 @@ def getRunes(champion: str):
     statsAll = stats.find_all(class_='perks')
     for i in statsAll:
         i = i.find(class_='shard shard-active')
-        runes.append((i.find('img')['alt']))
-        
-    return runes
+        i = i.find('img')['alt']
+        runes.append(convert[i])
+    runesIds = json.loads(open('./runes.json', 'r').read())
+    runesConverted = []
+    for i in runes:
+        runesConverted.append(runesIds[i])
 
-getRunes('Shaco')
+    data = {
+        "primary": style[primaryRune],
+        "secondary": style[secondaryRune],
+        "ids": runesConverted,
+    }
+    
+    return data

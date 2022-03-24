@@ -2,5 +2,7 @@ from main import Api
 
 lcu = Api()
 
-lcu.setChampion('shaco')
+cos = lcu.getAllChampions()
+lcu.setChampion('Riven')
+
 print(lcu.importRunes())
