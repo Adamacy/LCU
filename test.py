@@ -5,4 +5,4 @@ lcu = Api()
 cos = lcu.getAllChampions()
 lcu.setChampion('Riven')
 
-print(lcu.getChampBuild())
+print(lcu.importRunes())

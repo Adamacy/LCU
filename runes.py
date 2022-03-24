@@ -1,4 +1,4 @@
-import requests
+import requests, json
 from bs4 import BeautifulSoup
 
 convert = {
@@ -9,6 +9,14 @@ convert = {
     "The Magic Resist Shard": "MagicRes",
     "The Scaling Bonus Health Shard": "HealthScaling"
 
+}
+
+style = {
+    'Domination': 8100,
+    'Inspiration': 8300,
+    'Precision': 8000,
+    'Resolve': 8400,
+    'Sorcery': 8200
 }
 
 def getRunes(champion: str):
@@ -66,9 +74,15 @@ def getRunes(champion: str):
         i = i.find(class_='shard shard-active')
         i = i.find('img')['alt']
         runes.append(convert[i])
+    runesIds = json.loads(open('./runes.json', 'r').read())
+    runesConverted = []
+    for i in runes:
+        runesConverted.append(runesIds[i])
+
     data = {
-        "primary": primaryRune,
-        "secondary": secondaryRune,
-        "ids": runes,
+        "primary": style[primaryRune],
+        "secondary": style[secondaryRune],
+        "ids": runesConverted,
     }
+    
     return data

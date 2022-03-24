@@ -169,12 +169,17 @@ class Api:
 
         return images
 
+    def allRunes(self):
+        return self.get('/lol-perks/v1/perks').json()
+
     def getChampBuild(self):
         """Returns names of best build for selected champion"""
         return runes.getRunes(self.champion)
 
     def importRunes(self):
+        """Doesn't Work"""
 
+        runes = self.getChampBuild()
         id = self.get('/lol-perks/v1/currentpage').json()['id']
         self.delete(f'/lol-perks/v1/pages/{id}')
         data = {
@@ -188,13 +193,19 @@ class Api:
             "isEditable": True,
             "isValid": True,
             "lastModified": 0,
-            "name": "string",
+            "name": f"{self.champion} build",
             "order": 0,
             "primaryStyleId": 0,
             "selectedPerkIds": [],
             "subStyleId": 0
         }
+        data['primaryStyleId'] = runes['primary']
+        data['subStyleId'] = runes['secondary']
+        print(runes['ids'])
+        for i in self.get('/lol-perks/v1/perks').json():
+            if i['name'] in runes['ids']:
+                print(i['name'], i['id'])
+                data['selectedPerkIds'].append(i['id'])
+
         self.post('/lol-perks/v1/pages', data=json.dumps(data))
-        return "Deleted/Created"
-        # https://hextechdocs.dev/how-to-set-runes-using-lcu/
-        # https://hextechdocs.dev/
+        return data['selectedPerkIds']
