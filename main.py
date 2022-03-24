@@ -18,7 +18,7 @@ class Api:
     def __init__(self) -> None:
 
         file = open(
-            'D:/Riot Games/League of Legends/lockfile', 'r')
+            'C:/Riot Games/League of Legends/lockfile', 'r')
         self.data = file.read().split(':')
         self.certificate = 'cer.pem'
         self.uri = 'https://127.0.0.1'
@@ -201,11 +201,7 @@ class Api:
         }
         data['primaryStyleId'] = runes['primary']
         data['subStyleId'] = runes['secondary']
-        print(runes['ids'])
-        for i in self.get('/lol-perks/v1/perks').json():
-            if i['name'] in runes['ids']:
-                print(i['name'], i['id'])
-                data['selectedPerkIds'].append(i['id'])
+        data['selectedPerkIds'] = runes['ids']
 
-        self.post('/lol-perks/v1/pages', data=json.dumps(data))
-        return data['selectedPerkIds']
+        cos = self.post('/lol-perks/v1/pages', data=json.dumps(data))
+        return data
