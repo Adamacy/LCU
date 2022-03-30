@@ -5,7 +5,7 @@ import asyncio
 from exceptions import Errors
 from bs4 import BeautifulSoup
 import runes
-
+from subprocess import check_output
 
 exceptions = Errors()
 
@@ -17,16 +17,13 @@ class Api:
 
     def __init__(self) -> None:
 
-        file = open(
-            'C:/Riot Games/League of Legends/lockfile', 'r')
-        self.data = file.read().split(':')
+        self.data = check_output('wmic PROCESS WHERE "name=\'LeagueClientUx.exe\'" GET commandline')
         self.certificate = 'cer.pem'
         self.uri = 'https://127.0.0.1'
-        self.port = self.data[2]
-        self.password = self.data[3]
+        self.port = self.data.split()[16].decode().split('=')[1][:-1]
+        self.password = self.data.split()[11].decode().split('=')[1][:-1]
         self.endpoint = None
         self.data = None
-
         auth = f'riot:{self.password}'.encode('ascii')
         self.headers = {
             'Authorization': f"Basic {b64encode(auth).decode('ascii')}",
@@ -74,7 +71,7 @@ class Api:
         self.lang = lang
 
     def setChampion(self, champion: str):
-        champion = champion.capitalize()
+        self.champion = champion.capitalize()
         if champion not in self.getAllChampions():
             raise exceptions.championWrongName()
         else:
@@ -115,7 +112,7 @@ class Api:
     def getChampStats(self):
         if self.lang == None:
             raise exceptions.languageNotSet()
-        if self.champion not in list(self.getAllChampions()['data'].keys()):
+        if self.champion not in self.getAllChampions():
             raise exceptions.championWrongName()
         info = requests.get(
             f'http://ddragon.leagueoflegends.com/cdn/12.5.1/data/{self.lang}/champion/{self.champion}.json')
@@ -138,16 +135,15 @@ class Api:
     def getChampionImage(self):
         """Returns champion image as bytes"""
 
-        champion = champion.capitalize()
 
-        data = self.getChampStats(self.champion)['data'][self.champion]
+        data = self.getChampStats()['data'][self.champion]
         i = data['image']['full']
         return f'http://ddragon.leagueoflegends.com/cdn/12.5.1/img/champion/{i}'
 
     def getChampionSpells(self):
         """Returns an array of champion spells and passive"""
 
-        data = self.getChampStats(self.champion)['data'][self.champion]
+        data = self.getChampStats()['data'][self.champion]
         self.spellNames = []
         for spell in data['spells']:
             self.spellNames.append(spell['name'])
@@ -157,7 +153,7 @@ class Api:
 
     def getSpellsImage(self):
         """Return images of all champion spells"""
-        data = self.getChampStats(self.champion)['data'][self.champion]
+        data = self.getChampStats()['data'][self.champion]
         images = []
         for i in data['spells']:
             i = i['image']['full']
@@ -203,5 +199,7 @@ class Api:
         data['subStyleId'] = runes['secondary']
         data['selectedPerkIds'] = runes['ids']
 
-        cos = self.post('/lol-perks/v1/pages', data=json.dumps(data))
+        self.post('/lol-perks/v1/pages', data=json.dumps(data))
         return data
+
+    
