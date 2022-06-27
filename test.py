@@ -2,7 +2,8 @@ from main import Api
 
 lcu = Api()
 
-cos = lcu.getAllChampions()
-lcu.setChampion('Riven')
+lcu.setChampion('Shaco')
 
-print(lcu.importRunes())
+for i in lcu.getPlayersPicks():
+    lcu.champion = i
+    print(f'Counters for: {i}: {lcu.getCounters()}')

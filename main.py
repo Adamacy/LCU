@@ -5,7 +5,7 @@ import asyncio
 from exceptions import Errors
 from bs4 import BeautifulSoup
 import runes
-
+from subprocess import check_output
 
 exceptions = Errors()
 
@@ -17,16 +17,19 @@ class Api:
 
     def __init__(self) -> None:
 
-        file = open(
-            'C:/Riot Games/League of Legends/lockfile', 'r')
-        self.data = file.read().split(':')
+        #self.data = check_output('wmic PROCESS WHERE "name=\'LeagueClientUx.exe\'" GET commandline')
+        #"--app-port=50680"
+        self.data = open('D:/Riot Games/League of Legends/lockfile').read().split(':')
+        #print(self.data.decode('utf-8').split('--app-port=')[1].split('"')[0])
         self.certificate = 'cer.pem'
         self.uri = 'https://127.0.0.1'
-        self.port = self.data[2]
-        self.password = self.data[3]
+        try:
+            self.port = self.data[2]
+            self.password = self.data[3]
+        except:
+            raise exceptions.gameNotStarted()
         self.endpoint = None
         self.data = None
-
         auth = f'riot:{self.password}'.encode('ascii')
         self.headers = {
             'Authorization': f"Basic {b64encode(auth).decode('ascii')}",
@@ -74,7 +77,7 @@ class Api:
         self.lang = lang
 
     def setChampion(self, champion: str):
-        champion = champion.capitalize()
+        self.champion = champion.capitalize()
         if champion not in self.getAllChampions():
             raise exceptions.championWrongName()
         else:
@@ -85,15 +88,17 @@ class Api:
         session = self.get('/lol-champ-select/v1/session').json()
         summoner = self.get('/lol-summoner/v1/current-summoner').json()
         champions = []
+        print(session)
         self.puuid = summoner['puuid']
         self.summonerID = summoner['summonerId']
         self.accountID = summoner['accountId']
         try:
-            for i in session['actions'][1]:
-                if i[1]['type'] == 'ban':
+            if session['httpStatus'] == 404:
+                return exceptions.matchNotFound()
+        except KeyError:
+            for i in session['actions'][0]:
+                if i['type'] == 'ban':
                     continue
-                else:
-                    print(i)
                 championID = i['championId']
                 if championID == 0:
                     pass
@@ -102,8 +107,6 @@ class Api:
                         f'/lol-champions/v1/inventories/{self.summonerID}/champions/{championID}')
                     champions.append(champ.json()['name'])
             return champions
-        except:
-            raise exceptions.matchNotFound()
 
     def getAllChampions(self):
 
@@ -115,7 +118,7 @@ class Api:
     def getChampStats(self):
         if self.lang == None:
             raise exceptions.languageNotSet()
-        if self.champion not in list(self.getAllChampions()['data'].keys()):
+        if self.champion not in self.getAllChampions():
             raise exceptions.championWrongName()
         info = requests.get(
             f'http://ddragon.leagueoflegends.com/cdn/12.5.1/data/{self.lang}/champion/{self.champion}.json')
@@ -138,16 +141,15 @@ class Api:
     def getChampionImage(self):
         """Returns champion image as bytes"""
 
-        champion = champion.capitalize()
 
-        data = self.getChampStats(self.champion)['data'][self.champion]
+        data = self.getChampStats()['data'][self.champion]
         i = data['image']['full']
         return f'http://ddragon.leagueoflegends.com/cdn/12.5.1/img/champion/{i}'
 
     def getChampionSpells(self):
         """Returns an array of champion spells and passive"""
 
-        data = self.getChampStats(self.champion)['data'][self.champion]
+        data = self.getChampStats()['data'][self.champion]
         self.spellNames = []
         for spell in data['spells']:
             self.spellNames.append(spell['name'])
@@ -157,7 +159,7 @@ class Api:
 
     def getSpellsImage(self):
         """Return images of all champion spells"""
-        data = self.getChampStats(self.champion)['data'][self.champion]
+        data = self.getChampStats()['data'][self.champion]
         images = []
         for i in data['spells']:
             i = i['image']['full']
@@ -203,5 +205,5 @@ class Api:
         data['subStyleId'] = runes['secondary']
         data['selectedPerkIds'] = runes['ids']
 
-        cos = self.post('/lol-perks/v1/pages', data=json.dumps(data))
+        self.post('/lol-perks/v1/pages', data=json.dumps(data))
         return data

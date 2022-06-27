@@ -8,7 +8,6 @@ convert = {
     'The Armor Shard': "Armor",
     "The Magic Resist Shard": "MagicRes",
     "The Scaling Bonus Health Shard": "HealthScaling"
-
 }
 
 style = {
