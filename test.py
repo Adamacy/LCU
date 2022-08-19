@@ -1,9 +1,8 @@
-from main import Api
+from main import Lcu
 
-lcu = Api()
+lcu = Lcu()
 
-lcu.setChampion('Shaco')
+lcu.autoImport = True
 
-for i in lcu.getPlayersPicks():
-    lcu.champion = i
-    print(f'Counters for: {i}: {lcu.getCounters()}')
+lcu.champion = 'Mordekaiser'
+lcu.importRunes()

@@ -4,7 +4,6 @@ import json
 import asyncio
 from exceptions import Errors
 from bs4 import BeautifulSoup
-import runes
 from subprocess import check_output
 
 exceptions = Errors()
@@ -26,20 +25,23 @@ style = {
     'Sorcery': 8200
 }
 
-class Api:
 
+class Lcu:
+    """
+        Class where you have most of avaiable requests in Riot Api
+    """
     lang = 'en_US'
     champion = None
     autoImport = False
 
     def __init__(self) -> None:
-
         #self.data = check_output('wmic PROCESS WHERE "name=\'LeagueClientUx.exe\'" GET commandline')
-        #"--app-port=50680"
-        self.data = open('D:/Riot Games/League of Legends/lockfile').read().split(':')
-        #print(self.data.decode('utf-8').split('--app-port=')[1].split('"')[0])
+        # "--app-port=50680"
+        self.data = open(
+            'D:/Riot Games/League of Legends/lockfile').read().split(':')
+        # print(self.data.decode('utf-8').split('--app-port=')[1].split('"')[0])
         self.certificate = 'cer.pem'
-        self.uri = 'https://127.0.0.1'
+        self.uri = f'https://127.0.0.1'
         try:
             self.port = self.data[2]
             self.password = self.data[3]
@@ -82,11 +84,17 @@ class Api:
         return self.conn
 
     def getLangauges(self):
+        """
+            Gives all the languages avaiable in the API
+        """
         lang = requests.get(
             'https://ddragon.leagueoflegends.com/cdn/languages.json').json()
         return lang
 
     def setLanguage(self, lang: str):
+        """
+            Set language you want to get responses
+        """
         if lang in self.getLangauges():
             pass
         else:
@@ -94,18 +102,26 @@ class Api:
         self.lang = lang
 
     def setChampion(self, champion: str):
+        """
+            Function used to set champion for another functions
+        """
         self.champion = champion.capitalize()
         if champion not in self.getAllChampions():
             raise exceptions.championWrongName()
         else:
             self.champion = champion
 
+    def getTeammates():
+        pass
+
     def getPlayersPicks(self):
-        """Return array of champions name selected during champion select"""
+        """
+            Return array of champions name selected during champion select
+        """
         session = self.get('/lol-champ-select/v1/session').json()
         summoner = self.get('/lol-summoner/v1/current-summoner').json()
         champions = []
-        
+
         self.puuid = summoner['puuid']
         self.summonerID = summoner['summonerId']
         self.accountID = summoner['accountId']
@@ -129,19 +145,26 @@ class Api:
                                 if x['championId'] == 0:
                                     pass
                                 else:
-                                    champ = self.get(f"/lol-champions/v1/inventories/{self.summonerID}/champions/{x['championId']}")
+                                    champ = self.get(
+                                        f"/lol-champions/v1/inventories/{self.summonerID}/champions/{x['championId']}")
                                     self.setChampion(champ.json()['name'])
                                     self.importRunes()
             return champions
 
     def getAllChampions(self):
-
+        """
+            Gives array with all champions in the game
+        """
         champions = requests.get(
             'http://ddragon.leagueoflegends.com/cdn/12.5.1/data/en_US/champion.json')
 
         return list(champions.json()['data'].keys())
 
     def getChampStats(self):
+        """
+            Returns data about champion skills 
+        """
+
         if self.lang == None:
             raise exceptions.languageNotSet()
         if self.champion not in self.getAllChampions():
@@ -152,7 +175,9 @@ class Api:
         return info.json()
 
     def getCounters(self):
-
+        """
+            Returns array of champion counters
+        """
         res = requests.get(
             f'http://www.lolcounter.com/champions/{self.champion}', headers={'User-Agent': "counter-lol"})
         soup = BeautifulSoup(res.text, 'html.parser')
@@ -166,7 +191,6 @@ class Api:
 
     def getChampionImage(self):
         """Returns champion image as bytes"""
-
 
         data = self.getChampStats()['data'][self.champion]
         i = data['image']['full']
@@ -198,16 +222,19 @@ class Api:
         return images
 
     def allRunes(self):
+        """
+            Returns all runes avaiable in the game
+        """
         return self.get('/lol-perks/v1/perks').json()
 
     def getChampBuild(self):
         """
-        Returns dict with best build for selected champion.
+        Returns dict with best build for selected champion
         """
 
         res = requests.get(f'https://u.gg/lol/champions/{self.champion}/build')
         runes = []
-        
+
         soup = BeautifulSoup(res.text, 'html.parser')
 
         titles = soup.find_all(class_='perk-style-title')
@@ -218,7 +245,7 @@ class Api:
         primary = primary.find(class_='perk keystone perk-active')
 
         primary = primary.find_all('img')[0]['alt']
-        
+
         if "The Keystone" in primary:
             runes.append(primary.replace("The Keystone ", ""))
 
@@ -234,7 +261,6 @@ class Api:
             if "The Rune" in data:
                 rune = data.replace("The Rune ", "")
                 runes.append(rune)
-
 
         secondary = soup.find(class_='secondary-tree')
         cos = secondary.find_all(class_='perk-row')
@@ -265,11 +291,13 @@ class Api:
             "secondary": style[secondaryRune],
             "ids": runesConverted,
         }
-        
+
         return data
 
     def importRunes(self):
-        
+        """
+            Importing runes into the game. 
+        """
         runes = self.getChampBuild()
         id = self.get('/lol-perks/v1/currentpage').json()['id']
         self.delete(f'/lol-perks/v1/pages/{id}')
@@ -290,6 +318,7 @@ class Api:
             "selectedPerkIds": [],
             "subStyleId": 0
         }
+
         data['primaryStyleId'] = runes['primary']
         data['subStyleId'] = runes['secondary']
         data['selectedPerkIds'] = runes['ids']
