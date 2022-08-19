@@ -18,4 +18,4 @@ class Errors(Exception):
 
         
     def gameNotStarted(self):
-        raise Errors('Game is not started. Run League of Legends to start program.')
+        raise Errors('Game is not started. Run League of Legends to start process.')

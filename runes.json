@@ -67,5 +67,6 @@
     "CDRScaling": 5007,
     "Armor": 5002,
     "MagicRes": 5003,
-    "HealthScaling": 5001
+    "HealthScaling": 5001,
+    "Treasure Hunter": 8135
 }

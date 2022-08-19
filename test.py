@@ -1,8 +1,8 @@
-from main import Api
+from main import Lcu
 
-lcu = Api()
+lcu = Lcu()
 
-cos = lcu.getAllChampions()
-lcu.setChampion('Riven')
+lcu.autoImport = True
 
-print(lcu.importRunes())
+lcu.champion = 'Mordekaiser'
+lcu.importRunes()
