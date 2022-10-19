@@ -1,10 +1,12 @@
 from base64 import b64encode
+from grpc import StatusCode
 import requests
 import json
-import asyncio
+import os
 from exceptions import Errors
 from bs4 import BeautifulSoup
 from subprocess import check_output
+import re
 
 exceptions = Errors()
 
@@ -35,16 +37,16 @@ class Lcu:
     autoImport = False
 
     def __init__(self) -> None:
-        #self.data = check_output('wmic PROCESS WHERE "name=\'LeagueClientUx.exe\'" GET commandline')
-        # "--app-port=50680"
-        self.data = open(
-            'D:/Riot Games/League of Legends/lockfile').read().split(':')
-        # print(self.data.decode('utf-8').split('--app-port=')[1].split('"')[0])
+        self.data = check_output(
+            'wmic PROCESS WHERE "name=\'LeagueClientUx.exe\'" GET commandline').decode('utf-8')
+
         self.certificate = 'cer.pem'
         self.uri = f'https://127.0.0.1'
         try:
-            self.port = self.data[2]
-            self.password = self.data[3]
+            self.port = int(self.data.split("--app-port=")
+                            [1][0:].split(' ')[0][:-1])
+            self.password = self.data.split(
+                "--remoting-auth-token=")[1][0:].split(' ')[0][:-1]
         except:
             raise exceptions.gameNotStarted()
         self.endpoint = None
@@ -57,6 +59,7 @@ class Lcu:
 
     def get(self, endpoint: str, data: dict = {}):
         try:
+            print(self.port)
             self.conn = requests.get(f'{self.uri}:{self.port}{endpoint}',
                                      verify=self.certificate, headers=self.headers, data=data)
             return self.conn
@@ -162,7 +165,7 @@ class Lcu:
 
     def getChampStats(self):
         """
-            Returns data about champion skills 
+            Returns data about champion skills
         """
 
         if self.lang == None:
@@ -294,9 +297,13 @@ class Lcu:
 
         return data
 
+    def getGameData(self):
+        data = self.get("/lol-gameflow/v1/session")
+        print(data.json())
+
     def importRunes(self):
         """
-            Importing runes into the game. 
+            Importing runes into the game.
         """
         runes = self.getChampBuild()
         id = self.get('/lol-perks/v1/currentpage').json()['id']
@@ -324,4 +331,8 @@ class Lcu:
         data['selectedPerkIds'] = runes['ids']
 
         self.post('/lol-perks/v1/pages', data=json.dumps(data))
+
         return data
+
+
+Lcu().getGameData()
