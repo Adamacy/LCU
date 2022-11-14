@@ -1,12 +1,10 @@
 from base64 import b64encode
-from grpc import StatusCode
 import requests
 import json
 import os
 from exceptions import Errors
 from bs4 import BeautifulSoup
 from subprocess import check_output
-import re
 
 exceptions = Errors()
 
@@ -28,7 +26,7 @@ style = {
 }
 
 
-class Lcu:
+class LCU:
     """
         Class where you have most of avaiable requests in Riot Api
     """
@@ -59,7 +57,6 @@ class Lcu:
 
     def get(self, endpoint: str, data: dict = {}):
         try:
-            print(self.port)
             self.conn = requests.get(f'{self.uri}:{self.port}{endpoint}',
                                      verify=self.certificate, headers=self.headers, data=data)
             return self.conn
@@ -143,16 +140,15 @@ class Lcu:
                         f'/lol-champions/v1/inventories/{self.summonerID}/champions/{championID}')
                     champions.append(champ.json()['name'])
                     for x in session['myTeam']:
-                        if summoner['summonerId'] == x['summonerId']:
+                        if summoner['summonerId'] == x['summonerId'] and x['championId'] != 0:
+                            champ = self.get(
+                                    f"/lol-champions/v1/inventories/{self.summonerID}/champions/{x['championId']}").json()
                             if self.autoImport == True:
-                                if x['championId'] == 0:
-                                    pass
-                                else:
-                                    champ = self.get(
-                                        f"/lol-champions/v1/inventories/{self.summonerID}/champions/{x['championId']}")
-                                    self.setChampion(champ.json()['name'])
-                                    self.importRunes()
-            return champions
+                                self.champion = champ['name']
+                                self.importRunes()
+                        else:
+                            champ = None
+            return (champions, champ)
 
     def getAllChampions(self):
         """
@@ -333,6 +329,3 @@ class Lcu:
         self.post('/lol-perks/v1/pages', data=json.dumps(data))
 
         return data
-
-
-Lcu().getGameData()
