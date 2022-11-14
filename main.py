@@ -1,7 +1,7 @@
 from base64 import b64encode
 import requests
 import json
-import asyncio
+import os
 from exceptions import Errors
 from bs4 import BeautifulSoup
 from subprocess import check_output
@@ -26,7 +26,7 @@ style = {
 }
 
 
-class Lcu:
+class LCU:
     """
         Class where you have most of avaiable requests in Riot Api
     """
@@ -35,16 +35,16 @@ class Lcu:
     autoImport = False
 
     def __init__(self) -> None:
-        #self.data = check_output('wmic PROCESS WHERE "name=\'LeagueClientUx.exe\'" GET commandline')
-        # "--app-port=50680"
-        self.data = open(
-            'D:/Riot Games/League of Legends/lockfile').read().split(':')
-        # print(self.data.decode('utf-8').split('--app-port=')[1].split('"')[0])
+        self.data = check_output(
+            'wmic PROCESS WHERE "name=\'LeagueClientUx.exe\'" GET commandline').decode('utf-8')
+
         self.certificate = 'cer.pem'
         self.uri = f'https://127.0.0.1'
         try:
-            self.port = self.data[2]
-            self.password = self.data[3]
+            self.port = int(self.data.split("--app-port=")
+                            [1][0:].split(' ')[0][:-1])
+            self.password = self.data.split(
+                "--remoting-auth-token=")[1][0:].split(' ')[0][:-1]
         except:
             raise exceptions.gameNotStarted()
         self.endpoint = None
@@ -140,16 +140,15 @@ class Lcu:
                         f'/lol-champions/v1/inventories/{self.summonerID}/champions/{championID}')
                     champions.append(champ.json()['name'])
                     for x in session['myTeam']:
-                        if summoner['summonerId'] == x['summonerId']:
+                        if summoner['summonerId'] == x['summonerId'] and x['championId'] != 0:
+                            champ = self.get(
+                                    f"/lol-champions/v1/inventories/{self.summonerID}/champions/{x['championId']}").json()
                             if self.autoImport == True:
-                                if x['championId'] == 0:
-                                    pass
-                                else:
-                                    champ = self.get(
-                                        f"/lol-champions/v1/inventories/{self.summonerID}/champions/{x['championId']}")
-                                    self.setChampion(champ.json()['name'])
-                                    self.importRunes()
-            return champions
+                                self.champion = champ['name']
+                                self.importRunes()
+                        else:
+                            champ = None
+            return (champions, champ)
 
     def getAllChampions(self):
         """
@@ -162,7 +161,7 @@ class Lcu:
 
     def getChampStats(self):
         """
-            Returns data about champion skills 
+            Returns data about champion skills
         """
 
         if self.lang == None:
@@ -294,9 +293,13 @@ class Lcu:
 
         return data
 
+    def getGameData(self):
+        data = self.get("/lol-gameflow/v1/session")
+        print(data.json())
+
     def importRunes(self):
         """
-            Importing runes into the game. 
+            Importing runes into the game.
         """
         runes = self.getChampBuild()
         id = self.get('/lol-perks/v1/currentpage').json()['id']
@@ -324,4 +327,5 @@ class Lcu:
         data['selectedPerkIds'] = runes['ids']
 
         self.post('/lol-perks/v1/pages', data=json.dumps(data))
+
         return data
