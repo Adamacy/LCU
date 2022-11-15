@@ -25,6 +25,27 @@ style = {
     'Sorcery': 8200
 }
 
+def changeName(i: str):
+    print(f"Before change: {i}")
+
+    if i == "Cho'Gath":
+        i = "Chogath"
+    if i == "Dr. Mundo":
+        i = 'DrMundo'
+    if i == 'Wukong':
+        i = "MonkeyKing"
+    if i == "Kog'Maw":
+        i = "KogMaw"
+    if i == "Cho'Gath":
+        i = "Chogath"
+
+    if " " in i:
+        i = i.split(" ")
+        i = i[0].capitalize() + i[1].capitalize()
+
+    print(f"After change: {i}")
+
+    return i
 
 class LCU:
     """
@@ -177,16 +198,20 @@ class LCU:
         """
             Returns array of champion counters
         """
-        res = requests.get(
-            f'http://www.lolcounter.com/champions/{self.champion}', headers={'User-Agent': "counter-lol"})
+        counters = []
+        res = requests.get(f"https://u.gg/lol/champions/{self.champion}/counter")
         soup = BeautifulSoup(res.text, 'html.parser')
-        counters = soup.find(class_='weak-block')
 
-        counters = counters.find_all(class_="champ-block")
-        counter_list = [counter.find(class_='name').get_text()
-                        for counter in counters]
-
-        return counter_list
+        best_counters = soup.find_all(class_='counter-list-card best-win-rate')
+        for i in best_counters:
+            name = i.find(class_="champion-name").get_text()
+            wr = i.find(class_="win-rate").get_text().split(" ")[0]
+            data = {
+                "name": name,
+                "wr": wr,
+            }
+            counters.append(data)
+        return counters
 
     def getChampionImage(self):
         """Returns champion image as bytes"""
@@ -194,6 +219,10 @@ class LCU:
         data = self.getChampStats()['data'][self.champion]
         i = data['image']['full']
         return f'http://ddragon.leagueoflegends.com/cdn/12.5.1/img/champion/{i}'
+
+    def getChampLoadingScreen(self):
+        data = self.get(f"/lol-game-data/assets/ASSETS/Characters/{self.champion}/Skins/Base/{self.champion}LoadScreen.jpg")
+        return data
 
     def getChampionSpells(self):
         """Returns an array of champion spells and passive"""
@@ -219,6 +248,21 @@ class LCU:
         images.append(passive)
 
         return images
+
+    def setChampion(self, champion: str) -> None:
+        self.champion = changeName(champion)
+
+        return None
+
+    def getChampData(self):
+        stats = requests.get(f"http://ddragon.leagueoflegends.com/cdn/12.21.1/data/en_US/champion/{self.champion}.json").json()
+        
+        data = {
+            "stats": stats,
+            "counters": self.getCoutners(),
+            "build": self.getChampBuild()
+        }
+
 
     def allRunes(self):
         """
@@ -292,6 +336,9 @@ class LCU:
         }
 
         return data
+
+    def getChampionData(self):
+        pass
 
     def getGameData(self):
         data = self.get("/lol-gameflow/v1/session")

@@ -12,7 +12,6 @@ app.add_middleware(
     allow_headers=["Content-Type", "Set-Cookie"],
 )
 
-
 @app.get("/")
 async def root():
     global lcu
@@ -34,42 +33,18 @@ async def root():
 
     for i in picks[0]:
 
-
-        print(f"Before change: {i}")
-
-        if i == "Cho'Gath":
-            i = "Chogath"
-        if i == "Dr. Mundo":
-            i = 'DrMundo'
-        if i == 'Wukong':
-            i = "MonkeyKing"
-        if i == "Kog'Maw":
-            i = "KogMaw"
-        if i == "Cho'Gath":
-            i = "Chogath"
-
-        if " " in i:
-            i = i.split(" ")
-            i = i[0].capitalize() + i[1].capitalize()
-
-
-        print(f"After change: {i}")
-
-        if i not in lcu.getAllChampions():
-            print(f"There's no champion named: {i}")
-
-        lcu.champion = i
+        lcu.setChampion(i)
         images.append(lcu.getChampionImage())
         
     if picks[1]:
-        lcu.champion = picks[1]['alias']
+        lcu.setChampion(picks[1]['alias'])
     else:
-        return {"picks": picks[0], "images": images, "mypick": status.HTTP_404_NOT_FOUND}
+        return {"picks": {"champs": picks[0], "images": images}, "mypick": {"data": {"alias": ""}}}
     
     myChampImage = lcu.getChampionImage()
     
     
-    return {"picks": picks[0], "images": images, "mypick": {"data": picks[1], "image": myChampImage}}
+    return {"picks": {"champs": picks[0], "images": images}, "mypick": {"data": picks[1], "image": myChampImage}}
 
 
 @app.get("/runes")
@@ -83,8 +58,16 @@ def runes():
 
 
     if picks:
-        lcu.champion = picks['alias']
+        lcu.setChampion(picks['alias'])
         lcu.importRunes()
         return status.HTTP_201_CREATED
     else:
         return {"message": "Select champion first"}
+
+@app.get("/champion/{name}")
+def getDetails(name: str):
+    lcu = LCU()
+
+    lcu.setChampion(name)
+    print(lcu.champion)
+    return lcu.getChampData()
